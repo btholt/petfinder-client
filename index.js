@@ -1,4 +1,9 @@
-const jsonp = require("browser-jsonp");
+const isNode = require("is-node");
+let jsonp = () =>
+  console.warn("WARNING, YOU CALLED JSONP IN A NON-BROWSER CONTEXT");
+if (!isNode) {
+  jsonp = require("browser-jsonp");
+}
 
 let key;
 const BASE_URL = "http://api.petfinder.com";
@@ -12,8 +17,6 @@ const ANIMALS = [
   "horse",
   "pig"
 ];
-
-export { ANIMALS };
 
 const serialize = function(res) {
   const acc = {};
@@ -99,9 +102,10 @@ const api = {
   }
 };
 
-export default function(creds) {
+module.exports = function createPetfinderSingleton(creds) {
   if (creds) {
     key = creds.key;
   }
   return api;
-}
+};
+module.exports.ANIMALS = ANIMALS;

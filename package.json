@@ -17,6 +17,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "browser-jsonp": "^1.1.5",
+    "is-node": "^1.0.2",
     "url": "^0.11.0"
   }
 }
