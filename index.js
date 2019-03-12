@@ -15,6 +15,17 @@ const ANIMALS = [
 
 const time = () => 1000 + Math.floor(Math.random() * 3000);
 
+const imageAPI = [
+  "http://placecorgi.com",
+  "http://placekitten.com",
+  "http://placebear.com",
+  "http://placepup.com"
+];
+
+const imageGen = () =>
+  `${imageAPI[Math.floor(Math.random() * imageAPI.length)]}/${498 +
+    Math.floor(Math.random() * 4)}/${498 + Math.floor(Math.random() * 4)}`;
+
 const promiseGen = output =>
   new Promise(resolve => setTimeout(() => resolve(output), time()));
 
@@ -29,31 +40,31 @@ const petGen = () => ({
         {
           "@size": "pn",
           "@id": "1",
-          value: faker.image.imageUrl()
+          value: imageGen()
         },
 
         {
           "@size": "pn",
           "@id": "2",
-          value: faker.image.imageUrl()
+          value: imageGen()
         },
 
         {
           "@size": "pn",
           "@id": "3",
-          value: faker.image.imageUrl()
+          value: imageGen()
         },
 
         {
           "@size": "pn",
           "@id": "4",
-          value: faker.image.imageUrl()
+          value: imageGen()
         },
 
         {
           "@size": "pn",
           "@id": "5",
-          value: faker.image.imageUrl()
+          value: imageGen()
         }
       ]
     }
