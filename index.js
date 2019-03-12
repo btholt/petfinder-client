@@ -1,12 +1,7 @@
 const isNode = require("is-node");
-let jsonp = () =>
-  console.warn("WARNING, YOU CALLED JSONP IN A NON-BROWSER CONTEXT");
-if (!isNode) {
-  jsonp = require("browser-jsonp");
-}
+const faker = require("faker/locale/en");
 
 let key;
-const BASE_URL = "http://api.petfinder.com";
 const ANIMALS = [
   "dog",
   "cat",
@@ -18,72 +13,89 @@ const ANIMALS = [
   "pig"
 ];
 
-const serialize = function(res) {
-  const acc = {};
-  for (let prop in res) {
-    if (!prop) {
-      break;
-    }
-    if (res.hasOwnProperty(prop) && prop.charAt(0) !== "@") {
-      if (res[prop].hasOwnProperty("$t")) {
-        acc[prop] = res[prop]["$t"];
-      } else if (Array.isArray(res[prop])) {
-        acc[prop] = res[prop].map(item => {
-          if (item.hasOwnProperty("$t")) {
-            if (Object.getOwnPropertyNames(item).length > 1) {
-              item.value = item["$t"];
-              delete item["$t"];
-              return item;
-            } else {
-              return item["$t"];
-            }
-          } else {
-            return serialize(item);
-          }
-        });
-      } else if (Object.getOwnPropertyNames(res[prop]).length === 0) {
-        acc[prop] = null;
-      } else {
-        let serialized = serialize(res[prop]);
-        acc[prop] = serialized;
-      }
-    }
-  }
-  return acc;
-};
+const time = () => 1000 + Math.floor(Math.random() * 3000);
 
-const request = function(method, opts) {
-  let newOpts = { key, format: "json" };
-  newOpts = Object.assign(newOpts, opts);
-  return new Promise((resolve, reject) => {
-    jsonp({
-      url: BASE_URL + "/" + method,
-      data: newOpts,
-      success: function(data) {
-        resolve(serialize(data));
-      },
-      error: function(err) {
-        reject(err);
-      }
-    });
-  });
-};
+const promiseGen = output =>
+  new Promise(resolve => setTimeout(() => resolve(output), time()));
+
+const petGen = () => ({
+  contact: {
+    state: faker.address.stateAbbr(),
+    city: faker.address.city()
+  },
+  media: {
+    photos: {
+      photo: [
+        {
+          "@size": "pn",
+          "@id": "1",
+          value: faker.image.imageUrl()
+        },
+
+        {
+          "@size": "pn",
+          "@id": "2",
+          value: faker.image.imageUrl()
+        },
+
+        {
+          "@size": "pn",
+          "@id": "3",
+          value: faker.image.imageUrl()
+        },
+
+        {
+          "@size": "pn",
+          "@id": "4",
+          value: faker.image.imageUrl()
+        },
+
+        {
+          "@size": "pn",
+          "@id": "5",
+          value: faker.image.imageUrl()
+        }
+      ]
+    }
+  },
+  id: faker.random.number(10000),
+  shelterPetId: null,
+  breeds: {
+    breed: faker.lorem.word()
+  },
+  name: faker.name.firstName(),
+  description: faker.lorem.paragraph(10),
+  animal: faker.lorem.word()
+});
 
 const api = {
   breed: {
     list(opts) {
-      return request("breed.list", opts);
+      return promiseGen({
+        petfinder: {
+          breeds: {
+            breed: Array.from({ length: 5 }).map(() => faker.lorem.word())
+          }
+        }
+      });
     }
   },
   pet: {
-    getRandom(opts) {
-      return request("pet.getRandom", opts);
-    },
     get(opts) {
-      return request("pet.get", opts);
+      return promiseGen({
+        petfinder: {
+          pet: petGen()
+        }
+      });
     },
     find(opts) {
-      return request("pet.find", opts);
+      return promiseGen({
+        petfinder: {
+          pets: {
+            pet: Array.from({ length: 10 }).map(() => petGen())
+          }
+        }
+      });
     }
   },
   shelter: {
