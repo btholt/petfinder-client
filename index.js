@@ -56,7 +56,7 @@ const petGen = () => ({
             value: photo.full
           }
         ])
-        .reduce((acc, array) => acc.concat(array))
+        .reduce((acc, array) => acc.concat(array), [])
     }
   },
   id: data.id,
