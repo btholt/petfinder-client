@@ -5,7 +5,7 @@ export interface PetPhoto {
 
 export interface PetMedia {
   photos: {
-    photo?: PetPhoto[];
+    photo: PetPhoto[];
   };
 }
 
@@ -13,7 +13,7 @@ export interface Pet {
   id: string;
   name: string;
   breeds: {
-    breed: string[] | string;
+    breed: string;
   };
   animal: string;
   contact: {
@@ -26,14 +26,14 @@ export interface Pet {
 
 export interface PetResponse {
   petfinder: {
-    pet?: Pet;
+    pet: Pet;
   };
 }
 
 export interface PetFindResponse {
   petfinder: {
-    pets?: {
-      pet?: Pet | Pet[];
+    pets: {
+      pet: Pet[];
     };
   };
 }
@@ -47,8 +47,8 @@ interface RequestOptions {
 
 interface BreedResponse {
   petfinder: {
-    breeds?: {
-      breed?: string | string[];
+    breeds: {
+      breed: string[];
     };
   };
 }
@@ -68,4 +68,5 @@ export const ANIMALS: string[];
 export default function(options: {
   key: string;
   secret: string;
+  version?: 1 | 2;
 }): PetfinderClient;

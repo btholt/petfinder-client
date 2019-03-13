@@ -1,16 +1,14 @@
-const isNode = require("is-node");
-const faker = require("faker/locale/en");
+const axios = require("axios");
+let key, secret, authPromise, version;
 
-let key;
 const ANIMALS = [
   "dog",
   "cat",
   "bird",
   "barnyard",
-  "reptile",
-  "smallfurry",
+  "small-furry",
   "horse",
-  "pig"
+  "scales-fins-other"
 ];
 
 const time = () => 1000 + Math.floor(Math.random() * 3000);
@@ -30,103 +28,153 @@ const promiseGen = output =>
 
 const petGen = () => ({
   contact: {
-    state: faker.address.stateAbbr(),
-    city: faker.address.city()
+    state: data.contact.address.state,
+    city: data.contact.address.city
   },
   media: {
     photos: {
-      photo: [
-        {
-          "@size": "pn",
-          "@id": "1",
-          value: imageGen()
-        },
-
-        {
-          "@size": "pn",
-          "@id": "2",
-          value: imageGen()
-        },
-
-        {
-          "@size": "pn",
-          "@id": "3",
-          value: imageGen()
-        },
-
-        {
-          "@size": "pn",
-          "@id": "4",
-          value: imageGen()
-        },
-
-        {
-          "@size": "pn",
-          "@id": "5",
-          value: imageGen()
-        }
-      ]
+      photo: data.photos
+        .map((photo, index) => [
+          {
+            "@size": "pnt",
+            id: index,
+            value: photo.small
+          },
+          {
+            "@size": "pn",
+            id: index,
+            value: photo.medium
+          },
+          {
+            "@size": "x",
+            id: index,
+            value: photo.large
+          },
+          {
+            "@size": "t",
+            id: index,
+            value: photo.full
+          }
+        ])
+        .reduce((acc, array) => acc.concat(array))
     }
   },
-  id: faker.random.number(10000),
-  shelterPetId: null,
+  id: data.id,
+  shelterPetId: data.organization_id,
   breeds: {
-    breed: faker.lorem.word()
+    breed: data.breeds.primary
   },
-  name: faker.name.firstName(),
-  description: faker.lorem.paragraph(10),
-  animal: faker.lorem.word()
+  name: data.name,
+  description: data.description,
+  animal: data.type
 });
+
+function handleError(e) {
+  console.error("petfinder error", e);
+  throw e;
+}
 
 const api = {
   breed: {
     list(opts) {
-      return promiseGen({
-        petfinder: {
-          breeds: {
-            breed: Array.from({ length: 5 }).map(() => faker.lorem.word())
+      return authPromise
+        .then(authData => {
+          return axios.get(
+            `https://api.petfinder.com/v2/types/${opts.animal}/breeds`,
+            {
+              headers: {
+                Authorization: `Bearer ${authData.data.access_token}`
+              }
+            }
+          );
+        })
+        .then(res => {
+          if (version === 2) {
+            return Promise.resolve(res.data);
           }
-        }
-      });
+          const list = res.data.breeds.map(breed => breed.name);
+          return Promise.resolve({
+            petfinder: {
+              breeds: {
+                breed: list
+              }
+            }
+          });
+        })
+        .catch(handleError);
     }
   },
   pet: {
     get(opts) {
-      return promiseGen({
-        petfinder: {
-          pet: petGen()
-        }
-      });
-    },
-    find(opts) {
-      return promiseGen({
-        petfinder: {
-          pets: {
-            pet: Array.from({ length: 10 }).map(() => petGen())
+      return authPromise
+        .then(authData => {
+          return axios.get(`https://api.petfinder.com/v2/animals/${opts.id}`, {
+            headers: {
+              Authorization: `Bearer ${authData.data.access_token}`
+            }
+          });
+        })
+        .then(res => {
+          if (version === 2) {
+            return Promise.resolve(res.data);
           }
-        }
-      });
-    }
-  },
-  shelter: {
-    getPets(opts) {
-      return request("shelter.getPets", opts);
-    },
-    listByBreed(opts) {
-      return request("shelter.listByBreed", opts);
+
+          return Promise.resolve({
+            petfinder: {
+              pet: petGen(res.data.animal)
+            }
+          });
+        })
+        .catch(handleError);
     },
     find(opts) {
-      return request("shelter.find", opts);
-    },
-    get(opts) {
-      return request("shelter.get", opts);
+      const params = Object.assign(
+        { animal: opts.animal ? opts.animal : void 0 },
+        opts
+      );
+      return authPromise
+        .then(authData => {
+          return axios.get(`https://api.petfinder.com/v2/animals`, {
+            headers: {
+              Authorization: `Bearer ${authData.data.access_token}`
+            },
+            params: opts
+          });
+        })
+        .then(res => {
+          if (version === 2) {
+            return Promise.resolve(res.data);
+          }
+
+          return Promise.resolve({
+            petfinder: {
+              pets: {
+                pet: res.data.animals.map(petGen)
+              }
+            }
+          });
+        })
+        .catch(handleError);
     }
   }
 };
 
+function auth() {
+  authPromise = axios.post("https://api.petfinder.com/v2/oauth2/token", {
+    grant_type: "client_credentials",
+    client_id: key,
+    client_secret: secret
+  });
+}
+
 module.exports = function createPetfinderSingleton(creds) {
   if (creds) {
     key = creds.key;
+    secret = creds.secret;
+    version = creds.version;
+    if (!authPromise) {
+      auth();
+    }
   }
   return api;
 };
