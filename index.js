@@ -11,22 +11,7 @@ const ANIMALS = [
   "scales-fins-other"
 ];
 
-const time = () => 1000 + Math.floor(Math.random() * 3000);
-
-const imageAPI = [
-  "http://placecorgi.com",
-  "http://placekitten.com",
-  "http://placebear.com"
-];
-
-const imageGen = () =>
-  `${imageAPI[Math.floor(Math.random() * imageAPI.length)]}/${498 +
-    Math.floor(Math.random() * 4)}/${498 + Math.floor(Math.random() * 4)}`;
-
-const promiseGen = output =>
-  new Promise(resolve => setTimeout(() => resolve(output), time()));
-
-const petGen = () => ({
+const petGen = data => ({
   contact: {
     state: data.contact.address.state,
     city: data.contact.address.city
