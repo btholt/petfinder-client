@@ -18,8 +18,7 @@ const time = () => 1000 + Math.floor(Math.random() * 3000);
 const imageAPI = [
   "http://placecorgi.com",
   "http://placekitten.com",
-  "http://placebear.com",
-  "http://placepup.com"
+  "http://placebear.com"
 ];
 
 const imageGen = () =>
